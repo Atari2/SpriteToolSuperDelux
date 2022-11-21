@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.18)
 include(FetchContent)
-
+cmake_policy(GET CMP0091 cmp0091_val)
+message(STATUS "CMP0091: ${cmp0091_val}")
+set(BUILD_GMOCK OFF)
 get_target_property(PIXI_SOURCE_DIR pixi_api_static SOURCE_DIR)
+get_target_property(UNITTEST_RUNTIME_LIBRARY pixi_api_static MSVC_RUNTIME_LIBRARY)
 FetchContent_Declare(
     googletest
     GIT_REPOSITORY https://github.com/google/googletest
@@ -9,10 +12,15 @@ FetchContent_Declare(
 )
 enable_testing()
 include(GoogleTest)
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+if (MSVC_STATIC_STL)
+    set(gtest_force_shared_crt OFF CACHE BOOL "" FORCE)
+else()
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
 FetchContent_MakeAvailable(googletest)
 
 add_executable(PixiUnitTest harness.cpp)
+set_property(TARGET PixiUnitTest PROPERTY MSVC_RUNTIME_LIBRARY ${UNITTEST_RUNTIME_LIBRARY})
 target_include_directories(PixiUnitTest PUBLIC ${PIXI_SOURCE_DIR})
 target_link_libraries(PixiUnitTest PRIVATE pixi_api_static gtest_main)
 
